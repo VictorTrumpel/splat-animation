@@ -1,0 +1,19 @@
+{
+  "name": "splat-animation",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "vite": "^5.4.11"
+  },
+  "dependencies": {
+    "gsplat": "^1.2.4"
+  }
+}
