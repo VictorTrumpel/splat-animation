@@ -4,10 +4,13 @@ const canvas = document.querySelector("canvas");
 
 const scene = new SPLAT.Scene();
 const camera = new SPLAT.Camera();
-const renderer = new SPLAT.WebGLRenderer(canvas);
+const renderer = new SPLAT.WebGLRenderer(canvas, null);
 const controls = new SPLAT.OrbitControls(camera, canvas);
 const input = document.querySelector("input");
 const loadInfo = document.getElementById('load-info')
+
+console.log('renderer :>> ', renderer)
+console.log('scene :>> ', scene)
 
 const frameRate = 30;
 const wait = async () => {
@@ -28,20 +31,9 @@ input.onchange = async (e) => {
 
   for (const file of e.target.files) {
     const splat = await LoadFromFileAsync(file);
-    scene.addObject(splat);
-    splatList.push(splat);
+    splatList.push(splat);  
     loadInfo.innerText = `Загружено файлов ${splatList.length} из ${e.target.files.length}`
   }
-
-  const runAnim = async () => {
-    for (const splat of splatList) {
-        await wait();
-        scene.reset();
-        scene.addObject(splat);
-    }
-
-    runAnim();
-  };
 
   const reloadButton = document.createElement('button')
   reloadButton.innerText = 'СБРОСИТЬ'
@@ -49,7 +41,26 @@ input.onchange = async (e) => {
   loadInfo.innerText = ''
   loadInfo.append(reloadButton)
 
+  console.log('splatList :>> ', splatList)
+
+  const runAnim = async () => {
+    const origin = splatList.shift()
+    scene.addObject(origin);
+
+    for (const splat of splatList) {
+        await wait();
+        origin._data = splat.data
+        origin._data.changed = true
+        renderer._renderProgram._renderData.markDirty(origin)
+    }
+
+    scene.removeObject(origin)
+
+    runAnim();
+  };
+
   runAnim();
+  main();
 };
 
 async function main() {
@@ -60,7 +71,6 @@ async function main() {
     const frame = () => {
         controls.update();
         renderer.render(scene, camera);
-
         requestAnimationFrame(frame);
     };
 
@@ -139,4 +149,4 @@ function Deserialize(data) {
     return new SPLAT.SplatData(vertexCount, positions, rotations, scales, colors);
 }
 
-main();
+
