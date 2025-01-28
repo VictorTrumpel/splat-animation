@@ -1,16 +1,13 @@
-import * as SPLAT from "gsplat";
+import * as SPLAT from "../dist";
 
 const canvas = document.querySelector("canvas");
 
 const scene = new SPLAT.Scene();
 const camera = new SPLAT.Camera();
-const renderer = new SPLAT.WebGLRenderer(canvas, null);
+const renderer = new SPLAT.WebGLRenderer(canvas, [new SPLAT.FadeInPass(0.1)]);
 const controls = new SPLAT.OrbitControls(camera, canvas);
 const input = document.querySelector("input");
 const loadInfo = document.getElementById('load-info')
-
-console.log('renderer :>> ', renderer)
-console.log('scene :>> ', scene)
 
 const frameRate = 30;
 const wait = async () => {
@@ -24,16 +21,49 @@ const wait = async () => {
 };
 
 input.onchange = async (e) => {
-  const splatList = [];
+  const splatFile = e.target.files[0]
+  const splat = await LoadFromFileAsync(splatFile);
+
+  scene.addObject(splat)
+
+  const colors = splat._data._colors // 4 per once
+  const positions = splat._data._positions // 3 per once
+  const rotations = splat._data._rotations // 4 per once
+  const scales = splat._data._scales // 3 per once 
+  const vertexCount = splat._data._vertexCount
+
+
+  let prevSplat = null
+  const vertsIterScreen = 100
+  let k = 1
+//   for (let i = 0; i < vertexCount; i += 100) {
+//     const sliceColors = colors.slice(i * 4, k * vertsIterScreen * 4)
+//     const slicePositions = positions.slice(i * 3, k * vertsIterScreen * 3)
+//     const sliceRotations = rotations.slice(i * 4, k * vertsIterScreen * 4)
+//     const sliceScales = scales.slice(i * 3, k * vertsIterScreen * 3)
+
+//     console.log
+
+//     k += 1
+
+//     const splatData = new SPLAT.SplatData(
+//         slicePositions.length / 3, 
+//         slicePositions,
+//         sliceRotations,
+//         sliceScales,
+//         sliceColors
+//     )
+
+//     const splat = new SPLAT.Splat(splatData)
+
+//     scene.addObject(splat)
+//     await wait()
+//   }
+
+  console.log('splat :>> ', splat)
 
   input.style.display = 'none'
   loadInfo.style.display = 'block'
-
-  for (const file of e.target.files) {
-    const splat = await LoadFromFileAsync(file);
-    splatList.push(splat);  
-    loadInfo.innerText = `Загружено файлов ${splatList.length} из ${e.target.files.length}`
-  }
 
   const reloadButton = document.createElement('button')
   reloadButton.innerText = 'СБРОСИТЬ'
@@ -41,25 +71,6 @@ input.onchange = async (e) => {
   loadInfo.innerText = ''
   loadInfo.append(reloadButton)
 
-  console.log('splatList :>> ', splatList)
-
-  const runAnim = async () => {
-    const origin = splatList.shift()
-    scene.addObject(origin);
-
-    for (const splat of splatList) {
-        await wait();
-        origin._data = splat.data
-        origin._data.changed = true
-        renderer._renderProgram._renderData.markDirty(origin)
-    }
-
-    scene.removeObject(origin)
-
-    runAnim();
-  };
-
-  runAnim();
   main();
 };
 
